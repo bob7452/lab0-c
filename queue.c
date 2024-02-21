@@ -57,6 +57,9 @@ bool q_insert_head(struct list_head *head, char *s)
 /* Insert an element at tail of queue */
 bool q_insert_tail(struct list_head *head, char *s)
 {
+    if (!head)
+        return false;
+
     return q_insert_head(head->prev, s);
 }
 
@@ -78,6 +81,8 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 /* Remove an element from tail of queue */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
+    if (!head)
+        return NULL;
     return q_remove_head(head->prev->prev, sp, bufsize);
 }
 
@@ -97,6 +102,16 @@ int q_size(struct list_head *head)
 bool q_delete_mid(struct list_head *head)
 {
     // https://leetcode.com/problems/delete-the-middle-node-of-a-linked-list/
+    if (!head || list_empty(head))
+        return false;
+
+    struct list_head *fast = head->next, *slow = head->next;
+    for (; fast != head && (fast = fast->next) != head;
+         fast = fast->next, slow = slow->next)
+        ;
+    element_t *element = list_entry(slow, element_t, list);
+    list_del(&element->list);
+    q_release_element(element);
     return true;
 }
 
@@ -111,10 +126,29 @@ bool q_delete_dup(struct list_head *head)
 void q_swap(struct list_head *head)
 {
     // https://leetcode.com/problems/swap-nodes-in-pairs/
+    if (!head || list_empty(head))
+        return;
+
+    struct list_head *node = head->next;
+
+    while (node != head && node->next != head) {
+        struct list_head *tmp = node;
+        list_move(node, tmp->next);
+        node = node->next;
+    }
 }
 
 /* Reverse elements in queue */
-void q_reverse(struct list_head *head) {}
+void q_reverse(struct list_head *head)
+{
+    if (!head || list_empty(head))
+        return;
+
+    struct list_head *safe, *node;
+
+    list_for_each_safe (node, safe, head)
+        list_move(safe, head);
+}
 
 /* Reverse the nodes of the list k at a time */
 void q_reverseK(struct list_head *head, int k)
